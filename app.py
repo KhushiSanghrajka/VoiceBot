@@ -42,22 +42,11 @@ def generate_response(question):
 def speak(text):
     speech_config = speechsdk.SpeechConfig(
         subscription=os.getenv("AZURE_SPEECH_KEY"),
-        region=os.getenv("AZURE_SPEECH_REGION"),
+        region = os.getenv("AZURE_SPEECH_REGION"),
     )
-    speech_config.speech_synthesis_voice_name = "en-US-JennyNeural"
-
-    file_name = "output.mp3"  # Temp file for output
-    audio_config = speechsdk.audio.AudioOutputConfig(filename=file_name)
-
-    synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=audio_config)
-    result = synthesizer.speak_text_async(text).get()
-
-    if result.reason == speechsdk.ResultReason.Canceled:
-        cancellation_details = result.cancellation_details
-        print(f"Speech synthesis canceled: {cancellation_details.reason}")
-        return None  # Return None if speech synthesis failed
-
-    return file_name 
+    # speech_config.speech_synthesis_voice_name = "en-US-JennyNeural"
+    synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config)
+    synthesizer.speak_text_async(text).get()
 
 def listen():
     speech_config = speechsdk.SpeechConfig(
@@ -76,34 +65,12 @@ st.title("Talk to Khushi! 🤖")
 
 user_input = st.text_input("Ask me something:")
 if st.button("🎤 Speak"):
-    spoken_input = listen()  # Store voice input
+    spoken_input = listen()  # Store voice input in a different variable
     if spoken_input:
-        user_input = spoken_input  # Update text input
+        user_input = spoken_input  # This will update the text input
 
 if user_input:  # Works for both typed and spoken input
     with st.spinner("Thinking..."):
         bot_response = generate_response(user_input)
     st.write(bot_response)
-
-    # Generate speech
-    speech_file = speak(bot_response)
-    
-    if speech_file and os.path.exists(speech_file):  # Ensure file exists before reading
-        with open(speech_file, "rb") as audio_file:
-            audio_bytes = audio_file.read()
-            b64_audio = base64.b64encode(audio_bytes).decode()
-
-        # JavaScript to autoplay the audio
-        autoplay_js = f"""
-        <audio id="audioPlayer" autoplay>
-            <source src="data:audio/mp3;base64,{b64_audio}" type="audio/mp3">
-        </audio>
-        <script>
-            document.getElementById('audioPlayer').play();
-        </script>
-        """
-
-        # Inject autoplay audio in Streamlit
-        st.markdown(autoplay_js, unsafe_allow_html=True)
-    else:
-        st.error("Speech generation failed. Please try again.")  # Error handling
+    speak(bot_response)
