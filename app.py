@@ -46,18 +46,18 @@ def speak(text):
     )
     speech_config.speech_synthesis_voice_name = "en-US-JennyNeural"
 
-    file_name = "output.mp3"  # Save as MP3 for better streaming support
+    file_name = "output.mp3"  # Temp file for output
     audio_config = speechsdk.audio.AudioOutputConfig(filename=file_name)
 
     synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=audio_config)
-    
     result = synthesizer.speak_text_async(text).get()
-    
+
     if result.reason == speechsdk.ResultReason.Canceled:
         cancellation_details = result.cancellation_details
         print(f"Speech synthesis canceled: {cancellation_details.reason}")
+        return None  # Return None if speech synthesis failed
 
-    return file_name
+    return file_name 
 
 def listen():
     speech_config = speechsdk.SpeechConfig(
@@ -85,21 +85,25 @@ if user_input:  # Works for both typed and spoken input
         bot_response = generate_response(user_input)
     st.write(bot_response)
 
-    # Generate speech and encode for autoplay
+    # Generate speech
     speech_file = speak(bot_response)
-    with open(speech_file, "rb") as audio_file:
-        audio_bytes = audio_file.read()
-        b64_audio = base64.b64encode(audio_bytes).decode()
+    
+    if speech_file and os.path.exists(speech_file):  # Ensure file exists before reading
+        with open(speech_file, "rb") as audio_file:
+            audio_bytes = audio_file.read()
+            b64_audio = base64.b64encode(audio_bytes).decode()
 
-    # JavaScript to autoplay the audio
-    autoplay_js = f"""
-    <audio id="audioPlayer" autoplay>
-        <source src="data:audio/mp3;base64,{b64_audio}" type="audio/mp3">
-    </audio>
-    <script>
-        document.getElementById('audioPlayer').play();
-    </script>
-    """
+        # JavaScript to autoplay the audio
+        autoplay_js = f"""
+        <audio id="audioPlayer" autoplay>
+            <source src="data:audio/mp3;base64,{b64_audio}" type="audio/mp3">
+        </audio>
+        <script>
+            document.getElementById('audioPlayer').play();
+        </script>
+        """
 
-    # Inject autoplay audio in Streamlit
-    st.markdown(autoplay_js, unsafe_allow_html=True)
+        # Inject autoplay audio in Streamlit
+        st.markdown(autoplay_js, unsafe_allow_html=True)
+    else:
+        st.error("Speech generation failed. Please try again.")  # Error handling
