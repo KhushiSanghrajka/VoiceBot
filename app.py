@@ -76,7 +76,7 @@ st.title("Talk to Khushi! 🤖")
 
 user_input = st.text_input("Ask me something:")
 if st.button("🎤 Speak"):
-    spoken_input = listen()  # Store voice input in a different variable
+    spoken_input = listen()  # Store voice input
     if spoken_input:
         user_input = spoken_input  # Update text input
 
@@ -85,18 +85,21 @@ if user_input:  # Works for both typed and spoken input
         bot_response = generate_response(user_input)
     st.write(bot_response)
 
-    # Get speech file and serve it in Streamlit
+    # Generate speech and encode for autoplay
     speech_file = speak(bot_response)
-    
-    # Stream the audio file
-    audio_bytes = open(speech_file, "rb").read()
-    st.audio(audio_bytes, format="audio/mp3")
+    with open(speech_file, "rb") as audio_file:
+        audio_bytes = audio_file.read()
+        b64_audio = base64.b64encode(audio_bytes).decode()
 
-    # Inject JavaScript to autoplay the audio
+    # JavaScript to autoplay the audio
     autoplay_js = f"""
+    <audio id="audioPlayer" autoplay>
+        <source src="data:audio/mp3;base64,{b64_audio}" type="audio/mp3">
+    </audio>
     <script>
-        var audio = new Audio('data:audio/mp3;base64,{audio_bytes.decode("latin1")}');
-        audio.play();
+        document.getElementById('audioPlayer').play();
     </script>
     """
+
+    # Inject autoplay audio in Streamlit
     st.markdown(autoplay_js, unsafe_allow_html=True)
