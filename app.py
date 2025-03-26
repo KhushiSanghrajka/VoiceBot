@@ -91,3 +91,12 @@ if user_input:  # Works for both typed and spoken input
     # Stream the audio file
     audio_bytes = open(speech_file, "rb").read()
     st.audio(audio_bytes, format="audio/mp3")
+
+    # Inject JavaScript to autoplay the audio
+    autoplay_js = f"""
+    <script>
+        var audio = new Audio('data:audio/mp3;base64,{audio_bytes.decode("latin1")}');
+        audio.play();
+    </script>
+    """
+    st.markdown(autoplay_js, unsafe_allow_html=True)
