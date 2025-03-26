@@ -42,11 +42,20 @@ def generate_response(question):
 def speak(text):
     speech_config = speechsdk.SpeechConfig(
         subscription=os.getenv("AZURE_SPEECH_KEY"),
-        region = os.getenv("AZURE_SPEECH_REGION"),
+        region=os.getenv("AZURE_SPEECH_REGION"),
     )
-    # speech_config.speech_synthesis_voice_name = "en-US-JennyNeural"
-    synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config)
-    synthesizer.speak_text_async(text).get()
+    speech_config.speech_synthesis_voice_name = "en-US-JennyNeural"
+
+    # Prevents errors in environments without an audio device
+    audio_config = speechsdk.audio.AudioOutputConfig(use_default_speaker=False)
+
+    synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=audio_config)
+    
+    result = synthesizer.speak_text_async(text).get()
+    
+    if result.reason == speechsdk.ResultReason.Canceled:
+        cancellation_details = result.cancellation_details
+        print(f"Speech synthesis canceled: {cancellation_details.reason}")
 
 def listen():
     speech_config = speechsdk.SpeechConfig(
