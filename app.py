@@ -44,7 +44,7 @@ def speak(text):
         subscription=os.getenv("AZURE_SPEECH_KEY"),
         region = os.getenv("AZURE_SPEECH_REGION"),
     )
-    speech_config.speech_synthesis_voice_name = "en-US-JennyNeural"
+    # speech_config.speech_synthesis_voice_name = "en-US-JennyNeural"
     synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config)
     synthesizer.speak_text_async(text).get()
 
