@@ -46,8 +46,8 @@ def speak(text):
     )
     speech_config.speech_synthesis_voice_name = "en-US-JennyNeural"
 
-    # Prevents errors in environments without an audio device
-    audio_config = speechsdk.audio.AudioOutputConfig(use_default_speaker=False)
+    file_name = "output.mp3"  # Save as MP3 for better streaming support
+    audio_config = speechsdk.audio.AudioOutputConfig(filename=file_name)
 
     synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=audio_config)
     
@@ -56,6 +56,8 @@ def speak(text):
     if result.reason == speechsdk.ResultReason.Canceled:
         cancellation_details = result.cancellation_details
         print(f"Speech synthesis canceled: {cancellation_details.reason}")
+
+    return file_name
 
 def listen():
     speech_config = speechsdk.SpeechConfig(
@@ -76,10 +78,16 @@ user_input = st.text_input("Ask me something:")
 if st.button("🎤 Speak"):
     spoken_input = listen()  # Store voice input in a different variable
     if spoken_input:
-        user_input = spoken_input  # This will update the text input
+        user_input = spoken_input  # Update text input
 
 if user_input:  # Works for both typed and spoken input
     with st.spinner("Thinking..."):
         bot_response = generate_response(user_input)
     st.write(bot_response)
-    speak(bot_response)
+
+    # Get speech file and serve it in Streamlit
+    speech_file = speak(bot_response)
+    
+    # Stream the audio file
+    audio_bytes = open(speech_file, "rb").read()
+    st.audio(audio_bytes, format="audio/mp3")
